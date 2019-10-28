@@ -1,0 +1,7 @@
+INSERT  `WISS.DIM_MONTH` (MonthKey,Month, MonthNum, Year, StartDate, EndDate)
+
+Select 
+MonthKey,Month,MonthNum,Year,
+CAST(CONCAT(SUBSTR(LPAD(StartDate,9,'0'),6,4),'-',SUBSTR(LPAD(StartDate,9,'0'),1,2),'-',SUBSTR(LPAD(StartDate,9,'0'),4,1)) AS DATE) StartDate
+,CAST(CONCAT(SUBSTR(LPAD(EndDate,10,'0'),7,4),'-',SUBSTR(LPAD(EndDate,10,'0'),1,2),'-',SUBSTR(LPAD(EndDate,10,'0'),4,2)) AS DATE) EndDate
+from WISS.STG_MONTH

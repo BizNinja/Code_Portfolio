@@ -1,0 +1,185 @@
+MERGE `WISS.FTE_BU` T
+
+
+USING (Select
+M.MonthKey
+,L.PEField Service
+,X.HomeDepartmentCode
+,X.PayrollName
+,SUM(X.FTE) FTE
+,X.JobTitle
+
+from	((Select 
+		case when BusinessUnitCode IS NULL THEN 'OPERATIONS' else BusinessUnitCode end BusinessUnitCode
+		,HomeDepartmentCode
+		,PayrollName
+		,JobTitleDescription JobTitle
+		,CAST(SUBSTR(EndDate,7,4) AS INT64) Year
+		,'January' Month
+		,Jan FTE
+		from WISS.STG_FTE_BU
+		WHERE JAN IS NOT NULL)
+    
+    UNION ALL
+
+(Select 
+case when BusinessUnitCode IS NULL THEN 'OPERATIONS' else BusinessUnitCode end BusinessUnitCode
+,HomeDepartmentCode
+,PayrollName
+,JobTitleDescription JobTitle
+,CAST(SUBSTR(EndDate,7,4) AS INT64) Year
+,'February' Month
+,Feb FTE
+from WISS.STG_FTE_BU
+WHERE Feb IS NOT NULL)
+
+UNION ALL
+(Select 
+case when BusinessUnitCode IS NULL THEN 'OPERATIONS' else BusinessUnitCode end BusinessUnitCode
+,HomeDepartmentCode
+,PayrollName
+,JobTitleDescription JobTitle
+,CAST(SUBSTR(EndDate,7,4) AS INT64) Year
+,'March' Month
+,Mar FTE
+from WISS.STG_FTE_BU
+WHERE Mar IS NOT NULL)
+
+UNION ALL
+(Select 
+case when BusinessUnitCode IS NULL THEN 'OPERATIONS' else BusinessUnitCode end BusinessUnitCode
+,HomeDepartmentCode
+,PayrollName
+,JobTitleDescription JobTitle
+,CAST(SUBSTR(EndDate,7,4) AS INT64) Year
+,'April' Month
+,Apr FTE
+from WISS.STG_FTE_BU
+WHERE Apr IS NOT NULL)
+
+UNION ALL
+
+(Select 
+case when BusinessUnitCode IS NULL THEN 'OPERATIONS' else BusinessUnitCode end BusinessUnitCode
+,HomeDepartmentCode
+,PayrollName
+,JobTitleDescription JobTitle
+,CAST(SUBSTR(EndDate,7,4) AS INT64) Year
+,'May' Month
+,May FTE
+from WISS.STG_FTE_BU
+WHERE May IS NOT NULL)
+
+UNION ALL
+
+(Select 
+case when BusinessUnitCode IS NULL THEN 'OPERATIONS' else BusinessUnitCode end BusinessUnitCode
+,HomeDepartmentCode
+,PayrollName
+,JobTitleDescription JobTitle
+,CAST(SUBSTR(EndDate,7,4) AS INT64) Year
+,'June' Month
+,Jun FTE
+from WISS.STG_FTE_BU
+WHERE Jun IS NOT NULL)
+
+UNION ALL
+
+(Select 
+case when BusinessUnitCode IS NULL THEN 'OPERATIONS' else BusinessUnitCode end BusinessUnitCode
+,HomeDepartmentCode
+,PayrollName
+,JobTitleDescription JobTitle
+,CAST(SUBSTR(EndDate,7,4) AS INT64) Year
+,'July' Month
+,Jul FTE
+from WISS.STG_FTE_BU
+WHERE Jul IS NOT NULL)
+
+UNION ALL
+
+(Select 
+case when BusinessUnitCode IS NULL THEN 'OPERATIONS' else BusinessUnitCode end BusinessUnitCode
+,HomeDepartmentCode
+,PayrollName
+,JobTitleDescription JobTitle
+,CAST(SUBSTR(EndDate,7,4) AS INT64) Year
+,'August' Month
+,Aug FTE
+from WISS.STG_FTE_BU
+WHERE Aug IS NOT NULL)
+
+UNION ALL
+
+(Select 
+case when BusinessUnitCode IS NULL THEN 'OPERATIONS' else BusinessUnitCode end BusinessUnitCode
+,HomeDepartmentCode
+,PayrollName
+,JobTitleDescription JobTitle
+,CAST(SUBSTR(EndDate,7,4) AS INT64) Year
+,'September' Month
+,Sep FTE
+from WISS.STG_FTE_BU
+WHERE Sep IS NOT NULL)
+
+UNION ALL
+
+(Select 
+case when BusinessUnitCode IS NULL THEN 'OPERATIONS' else BusinessUnitCode end BusinessUnitCode
+,HomeDepartmentCode
+,PayrollName
+,JobTitleDescription JobTitle
+,CAST(SUBSTR(EndDate,7,4) AS INT64) Year
+,'October' Month
+,Oct FTE
+from WISS.STG_FTE_BU
+WHERE Oct IS NOT NULL)
+
+UNION ALL
+
+(Select 
+case when BusinessUnitCode IS NULL THEN 'OPERATIONS' else BusinessUnitCode end BusinessUnitCode
+,HomeDepartmentCode
+,PayrollName
+,JobTitleDescription JobTitle
+,CAST(SUBSTR(EndDate,7,4) AS INT64) Year
+,'November' Month
+,Nov FTE
+from WISS.STG_FTE_BU
+WHERE Nov IS NOT NULL)
+
+UNION ALL
+
+(
+Select 
+case when BusinessUnitCode IS NULL THEN 'OPERATIONS' else BusinessUnitCode end BusinessUnitCode
+,HomeDepartmentCode
+,PayrollName
+,JobTitleDescription JobTitle
+,CAST(SUBSTR(EndDate,7,4) AS INT64) Year
+,'December' Month
+,Dec FTE
+from WISS.STG_FTE_BU
+WHERE Dec IS NOT NULL) )  X
+LEFT JOIN `WISS.LKP_SERVICE`L ON X.BusinessUnitCode = L.ADPField
+JOIN `WISS.DIM_MONTH` M ON X.Month = M.Month and X.Year = M.Year
+
+Where X.BusinessUnitCode NOT IN ('Grand Totals','Total')
+
+GROUP BY M.MonthKey
+,L.PEField
+,X.HomeDepartmentCode
+,X.PayrollName
+,X.JobTitle) S
+
+
+
+ON T.MonthKey = S.MonthKey AND T.Service = S.Service AND T.HomeDepartmentCode = S.HomeDepartmentCode AND T.JobTitle = S.JobTitle
+
+WHEN MATCHED THEN
+  UPDATE SET 
+  FTE = S.FTE
+WHEN NOT MATCHED THEN
+  INSERT (MonthKey,Service,HomeDepartmentCode,PayrollName,FTE,JobTitle)
+  VALUES(S.MonthKey,S.Service,S.HomeDepartmentCode,S.PayrollName,S.FTE,S.JobTitle)
+ 

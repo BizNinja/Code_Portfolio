@@ -1,0 +1,31 @@
+MERGE `WISS.SERVICE_XWALK` T
+
+
+USING (Select Service,BusinessUnit,MonthKey
+FROM
+(
+SELECT Service,CASE WHEN HomeDepartmentCode IN (600,700) THEN 'FLEM' else 'WISS' end BusinessUnit,MonthKey FROM `WISS.FTE_BU` GROUP BY Service,CASE WHEN HomeDepartmentCode IN (600,700) THEN 'FLEM' else 'WISS' end,MonthKey
+UNION ALL
+SELECT Service,CASE WHEN HomeDepartmentCode IN (600,700) THEN 'FLEM' else 'WISS' end BusinessUnit,MonthKey FROM `WISS.GP_BU` GROUP BY Service,CASE WHEN HomeDepartmentCode IN (600,700) THEN 'FLEM' else 'WISS' end,MonthKey
+UNION ALL
+SELECT Service,BusinessUnit,MonthKey from WISS.PE_DATA GROUP BY Service,BusinessUnit,MonthKey)X
+WHERE MonthKey IS NOT NULL
+GROUP BY Service,BusinessUnit,MonthKey) S
+
+
+
+ON T.MonthKey = S.MonthKey AND T.Service = S.Service AND T.BusinessUnit = S.BusinessUnit 
+
+WHEN MATCHED THEN
+  UPDATE SET 
+  Service = S.Service
+  ,BusinessUnit = S.BusinessUnit
+  ,MonthKey = S.MonthKey
+WHEN NOT MATCHED THEN
+  INSERT (Service,BusinessUnit,MonthKey)
+  VALUES(S.Service,S.BusinessUnit,S.MonthKey)
+  
+  
+
+
+

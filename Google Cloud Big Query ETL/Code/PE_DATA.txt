@@ -1,0 +1,19 @@
+MERGE `WISS.PE_DATA` T
+
+
+USING (Select M.MonthKey, case when ServiceCategory IS NULL or ServiceCategory = '' or LOWER(ServiceCategory) = 'misc' then 'Non-Charge' else ServiceCategory end Service, ServiceTitle SubService,BusinessUnit,SUM(Hours) Hours,SUM(Cost) Cost,SUM(Billed) Billed from `WISS.STG_PE_DATA`
+JOIN `WISS.DIM_MONTH` M ON CAST(Date AS DATE) >= M.StartDate AND CAST(Date AS DATE) <= M.EndDate  GROUP BY M.MonthKey, ServiceCategory, ServiceTitle,BusinessUnit) S
+
+
+
+ON T.MonthKey = S.MonthKey AND T.Service = S.Service AND T.SubService = S.SubService AND S.BusinessUnit = T.BusinessUnit
+
+WHEN MATCHED THEN
+  UPDATE SET 
+  Billed = S.Billed
+  ,Cost = S.Cost
+  ,Hours = S.Hours
+WHEN NOT MATCHED THEN
+  INSERT (MonthKey,Service,SubService,BusinessUnit,Hours,Cost,Billed)
+  VALUES( S.MonthKey, S.Service, S.SubService,S.BusinessUnit,S.Hours,S.Cost,S.Billed)
+

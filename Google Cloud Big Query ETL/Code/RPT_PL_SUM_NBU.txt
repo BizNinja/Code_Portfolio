@@ -1,0 +1,26 @@
+MERGE `WISS.RPT_PL_SUM_NBU` T
+
+
+USING (Select A.MonthKey
+,CASE WHEN A.Service = '' or A.Service IS NULL then 'Non-Chargeable' else A.Service end Service
+,B.BilledRevenue
+,A.GrossPay GrossPay
+,C.FTE FTECount
+
+FROM (SELECT MonthKey,Service,SUM(GrossPay) GrossPay FROM `WISS.GP_BU` GROUP BY MonthKey,Service) A
+LEFT JOIN (SELECT MonthKey,Service,SUM(Billed)BilledRevenue FROM `WISS.PE_DATA` GROUP BY MonthKey,Service) B ON A.MonthKey = B.MonthKey AND A.Service = B.Service
+LEFT JOIN (SELECT MonthKey,Service,SUM(FTE) FTE FROM `WISS.FTE_BU` GROUP BY MonthKey,Service)  C ON A.MonthKey = C.MonthKey AND A.Service = C.Service) S
+
+
+
+ON T.MonthKey = S.MonthKey AND T.Service = S.Service
+
+WHEN MATCHED THEN
+  UPDATE SET 
+  BilledRevenue = S.BilledRevenue
+  ,GrossPay = S.GrossPay
+  ,FTECount = S.FTECount
+WHEN NOT MATCHED THEN
+  INSERT ( MonthKey, Service, BilledRevenue, GrossPay, FTECount)
+  VALUES( S.MonthKey, S.Service, S.BilledRevenue, S.GrossPay, S.FTECount)
+

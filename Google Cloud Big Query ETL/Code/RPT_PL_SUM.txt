@@ -1,0 +1,39 @@
+MERGE `WISS.RPT_PL_SUM` T
+
+
+USING (
+Select X.MonthKey
+,X.BusinessUnit
+,X.Service
+,B.BilledRevenue
+,A.GrossPay GrossPay
+,C.FTE FTECount
+,B1.BilledRevenue LYBR
+,A1.GrossPay LYGP
+,C1.FTE LYFTE
+
+FROM `WISS.SERVICE_XWALK` X 
+LEFT JOIN (SELECT MonthKey,Service,CASE WHEN HomeDepartmentCode IN (600,700) THEN 'FLEM' else 'WISS' end BusinessUnit,SUM(GrossPay) GrossPay FROM `WISS.GP_BU` GROUP BY MonthKey,Service,CASE WHEN HomeDepartmentCode IN (600,700) THEN 'FLEM' else 'WISS' end) A ON X.Service = A.Service AND X.BusinessUnit = A.BusinessUnit AND X.MonthKey = A.MonthKey
+LEFT JOIN (SELECT MonthKey,Service,CASE WHEN HomeDepartmentCode IN (600,700) THEN 'FLEM' else 'WISS' end BusinessUnit,SUM(GrossPay) GrossPay FROM `WISS.GP_BU` GROUP BY MonthKey,Service,CASE WHEN HomeDepartmentCode IN (600,700) THEN 'FLEM' else 'WISS' end) A1 ON X.Service = A1.Service AND X.BusinessUnit = A1.BusinessUnit AND X.MonthKey-100 = A1.MonthKey
+LEFT JOIN (SELECT MonthKey,Service,BusinessUnit,SUM(Billed)BilledRevenue FROM `WISS.PE_DATA` GROUP BY MonthKey,Service,BusinessUnit) B ON X.MonthKey = B.MonthKey AND X.Service = B.Service AND X.BusinessUnit = B.BusinessUnit
+LEFT JOIN (SELECT MonthKey,Service,BusinessUnit,SUM(Billed)BilledRevenue FROM `WISS.PE_DATA` GROUP BY MonthKey,Service,BusinessUnit) B1 ON X.MonthKey-100 = B1.MonthKey AND X.Service = B1.Service AND X.BusinessUnit = B1.BusinessUnit
+LEFT JOIN (SELECT MonthKey,Service,CASE WHEN HomeDepartmentCode IN (600,700) THEN 'FLEM' else 'WISS' end BusinessUnit,SUM(FTE) FTE FROM `WISS.FTE_BU` GROUP BY MonthKey,Service,CASE WHEN HomeDepartmentCode IN (600,700) THEN 'FLEM' else 'WISS' end)  C ON X.MonthKey = C.MonthKey AND X.Service = C.Service AND X.BusinessUnit = C.BusinessUnit
+LEFT JOIN (SELECT MonthKey,Service,CASE WHEN HomeDepartmentCode IN (600,700) THEN 'FLEM' else 'WISS' end BusinessUnit,SUM(FTE) FTE FROM `WISS.FTE_BU` GROUP BY MonthKey,Service,CASE WHEN HomeDepartmentCode IN (600,700) THEN 'FLEM' else 'WISS' end)  C1 ON X.MonthKey-100 = C1.MonthKey AND X.Service = C1.Service AND X.BusinessUnit = C1.BusinessUnit
+WHere X.MonthKey IS NOT NULL
+) S
+
+
+
+ON T.MonthKey = S.MonthKey AND T.Service = S.Service AND S.BusinessUnit = T.BusinessUnit
+
+WHEN MATCHED THEN
+  UPDATE SET 
+  BilledRevenue = S.BilledRevenue
+  ,GrossPay = S.GrossPay
+  ,FTECount = S.FTECount
+  ,LYBR = S.LYBR
+  ,LYGP = S.LYGP
+  ,LYFTE = S.LYFTE
+WHEN NOT MATCHED THEN
+  INSERT ( MonthKey, BusinessUnit, Service, BilledRevenue, GrossPay, FTECount, LYBR, LYGP, LYFTE)
+  VALUES( S.MonthKey, S.BusinessUnit, S.Service, S.BilledRevenue, S.GrossPay, S.FTECount, S.LYBR, S.LYGP, S.LYFTE)
