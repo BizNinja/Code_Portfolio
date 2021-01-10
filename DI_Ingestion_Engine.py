@@ -1,6 +1,6 @@
 # PURPOSE: This class will pull data from Drilling Info in a full or incremental manner. You can pass different data
 # services to pull different tables back from the API.
-# AUTHOR: John Schlafly (CapTech) and Justin Lowe (CapTech)
+# AUTHOR: Justin Lowe (CapTech)
 # VERSION: 1.01
 import json
 import warnings
